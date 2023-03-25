@@ -47,6 +47,9 @@ frame_rate_calc = 1
 freq = cv2.getTickFrequency()
 font = cv2.FONT_HERSHEY_SIMPLEX
 
+# Initialize phone detection counter
+phone_seen = 0
+
 while True:
     # Initialize Picamera and grab reference to the raw capture
     camera = PiCamera()
