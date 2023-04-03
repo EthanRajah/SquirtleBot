@@ -41,10 +41,6 @@ rectangles = []
 phoneCount = [0]
 LCDSequenceStart = [False]
 
-# initialize pump
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(17,GPIO.OUT)
-
 
 def ReadLabelFile(file_path):
     with open(file_path, 'r') as f:
@@ -184,6 +180,7 @@ def main():
     timeCount = 60
     counterForCounter = 0
     # LCDSequenceStart = False
+    
 
     while True:
         buffer = picam2.capture_buffer("lores")
@@ -221,12 +218,15 @@ def main():
                 # punishment
                 mylcd.lcd_clear()
                 mylcd.lcd_display_string("COUNT UP: USING", 1, 0)
-                mylcd.lcd_display_string("WATER GUN:", 2, 0)
+                mylcd.lcd_display_string("WATER GUN!", 2, 0)
                 # Run Squirtle sound to indicate pump activation
                 os.chdir('/home/mie438/SquirtleBot/squirtleSounds')
                 os.system('python3 squirtlebotSound.py squirtle_timerend.wav')
                 
                 # activating pump
+                # initialize pump
+                GPIO.setmode(GPIO.BCM)
+                GPIO.setup(17,GPIO.OUT)
                 GPIO.output(17, GPIO.LOW)
                 os.system('python3 squirtlebotSound.py squirtlewatergun.wav') #pump runs during this
                 GPIO.output(17, GPIO.HIGH)
