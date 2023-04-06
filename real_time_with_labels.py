@@ -23,12 +23,16 @@ from picamera2 import MappedArray, Picamera2, Preview
 
 import I2C_LCD_driver
 import time
-import asyncio
+import RPi.GPIO as GPIO
+import os
+import random
 
 # initialize LCD
 mylcd = I2C_LCD_driver.lcd()
-defaultMsg = "I'm Squirtlebot!"
+defaultMsg = "Hi, I am"
 mylcd.lcd_display_string(defaultMsg, 1, 0)
+defaultMsg = "Squirtlebot!"
+mylcd.lcd_display_string(defaultMsg, 2, 0)
 
 normalSize = (640, 480)
 lowresSize = (320, 240)
@@ -36,6 +40,7 @@ lowresSize = (320, 240)
 rectangles = []
 phoneCount = [0]
 LCDSequenceStart = [False]
+
 
 def ReadLabelFile(file_path):
     with open(file_path, 'r') as f:
@@ -127,6 +132,8 @@ async def countdown():
     while timeCount >= 0:
         if LCDSequenceStart[0] == False:
             break
+        if timeCount < 10:
+            mylcd.lcdclear()
         mylcd.lcd_display_string(f"Timeout in {timeCount} s",1,0)
         timeCount -= 1
         
@@ -137,6 +144,7 @@ async def countIsDone():
     awaits the countdown, and if countdown reaches end, execute punishment sequence
     '''
     await countdown()
+    mylcd.lcd_clear()
     mylcd.lcd_display_string("COUNT OVER", 1, 0)
     
 def main():
@@ -172,6 +180,7 @@ def main():
     timeCount = 60
     counterForCounter = 0
     # LCDSequenceStart = False
+    
 
     while True:
         buffer = picam2.capture_buffer("lores")
@@ -180,17 +189,49 @@ def main():
         _ = InferenceTensorFlow(grey, args.model, output_file, label_file)
         # Check if phone counter is greater than 10 and sequence hasnt been started. If it is, start LCD sequence
         print(phoneCount[0])
+        
         if phoneCount[0] >= 10 and LCDSequenceStart[0] == False:
             LCDSequenceStart[0] = True # run countdown
             phoneCount[0] = 0
+            # Run Squirtle sound to indicate LCD countdown start
+            os.chdir('/home/mie438/SquirtleBot/squirtleSounds')
+            introSounds = ['squirtle_timerstart1.wav', 'squirtle_timerstart2.wav',
+                           'squirtle_timerstart3.wav', 'squirtle_timerstart4.wav',
+                           'squirtle_timerstart5.wav']
+            choiceIdx = np.random.choice(3,1)
+            if choiceIdx == 0:
+                os.system('python3 squirtlebotSound.py squirtle_timerstart1.wav')
+            elif choiceIdx == 1:
+                os.system('python3 squirtlebotSound.py squirtle_timerstart2.wav')
+            elif choiceIdx == 2:
+                os.system('python3 squirtlebotSound.py squirtle_timerstart4.wav')
+                
+            os.chdir('/home/mie438/SquirtleBot')
+            
         if LCDSequenceStart[0] and counterForCounter >= 8:
             counterForCounter = 0
             if timeCount >= 0:
-                mylcd.lcd_display_string(f"Timeout in {timeCount} s",1,0)
+                mylcd.lcd_clear()
+                mylcd.lcd_display_string(f"Timeout in {timeCount}s",1,0)
                 timeCount -= 1
             else:
                 # punishment
-                mylcd.lcd_display_string("COUNT UP: USING WATER GUN", 1, 0)
+                mylcd.lcd_clear()
+                mylcd.lcd_display_string("COUNT UP: USING", 1, 0)
+                mylcd.lcd_display_string("WATER GUN!", 2, 0)
+                # Run Squirtle sound to indicate pump activation
+                os.chdir('/home/mie438/SquirtleBot/squirtleSounds')
+                os.system('python3 squirtlebotSound.py squirtle_timerend.wav')
+                
+                # activating pump
+                # initialize pump
+                GPIO.setmode(GPIO.BCM)
+                GPIO.setup(17,GPIO.OUT)
+                GPIO.output(17, GPIO.LOW)
+                os.system('python3 squirtlebotSound.py squirtlewatergun.wav') #pump runs during this
+                GPIO.output(17, GPIO.HIGH)
+                GPIO.cleanup()
+                os.chdir('/home/mie438/SquirtleBot')
                 break # temporary: ends the program
                 
         if phoneCount[0] == prevCount:
@@ -201,12 +242,19 @@ def main():
     
         # Sequence has already started, so keep running until LCD interrupt or no phone being detected
         if LCDSequenceStart[0] == True and nophoneCount > 30:
-            print("HERE")
             LCDSequenceStart[0] = False
             nophoneCount = 0
             phoneCount[0] = 0
             timeCount = 60
+            mylcd.lcd_clear()
+            defaultMsg = "Hi, I am"
             mylcd.lcd_display_string(defaultMsg, 1, 0)
+            defaultMsg = "Squirtlebot!"
+            mylcd.lcd_display_string(defaultMsg, 2, 0)
+            # Run Squirtle sound to indicate that the LCD timer has stopped
+            os.chdir('/home/mie438/SquirtleBot/squirtleSounds')
+            os.system('python3 squirtlebotSound.py squirtle.wav')
+            os.chdir('/home/mie438/SquirtleBot')
         time.sleep(0.01)
         counterForCounter += 1
 
