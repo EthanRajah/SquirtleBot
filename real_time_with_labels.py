@@ -27,13 +27,6 @@ import RPi.GPIO as GPIO
 import os
 import random
 
-# initialize LCD
-mylcd = I2C_LCD_driver.lcd()
-defaultMsg = "Hi, I am"
-mylcd.lcd_display_string(defaultMsg, 1, 0)
-defaultMsg = "Squirtlebot!"
-mylcd.lcd_display_string(defaultMsg, 2, 0)
-
 normalSize = (640, 480)
 lowresSize = (320, 240)
 
@@ -148,6 +141,14 @@ async def countIsDone():
     mylcd.lcd_display_string("COUNT OVER", 1, 0)
     
 def main():
+    
+    # initialize LCD
+    mylcd = I2C_LCD_driver.lcd()
+    defaultMsg = "Hi, I am"
+    mylcd.lcd_display_string(defaultMsg, 1, 0)
+    defaultMsg = "Squirtlebot!"
+    mylcd.lcd_display_string(defaultMsg, 2, 0)
+    
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', help='Path of the detection model.', required=True)
     parser.add_argument('--label', help='Path of the labels file.')
@@ -187,6 +188,7 @@ def main():
         grey = buffer[:stride * lowresSize[1]].reshape((lowresSize[1], stride))
         prevCount = phoneCount[0]
         _ = InferenceTensorFlow(grey, args.model, output_file, label_file)
+        
         # Check if phone counter is greater than 10 and sequence hasnt been started. If it is, start LCD sequence
         print(phoneCount[0])
         
@@ -217,7 +219,7 @@ def main():
             else:
                 # punishment
                 mylcd.lcd_clear()
-                mylcd.lcd_display_string("COUNT UP: USING", 1, 0)
+                mylcd.lcd_display_string("TIME'S UP: USING", 1, 0)
                 mylcd.lcd_display_string("WATER GUN!", 2, 0)
                 # Run Squirtle sound to indicate pump activation
                 os.chdir('/home/mie438/SquirtleBot/squirtleSounds')
@@ -232,7 +234,16 @@ def main():
                 GPIO.output(17, GPIO.HIGH)
                 GPIO.cleanup()
                 os.chdir('/home/mie438/SquirtleBot')
-                break # temporary: ends the program
+                
+                # Reset counters and LCD to continue looping
+                time.sleep(3)
+                LCDSequenceStart[0] = False
+                nophoneCount = 0
+                phoneCount[0] = 0
+                timeCount = 60
+                mylcd = I2C_LCD_driver.lcd()
+                mylcd.lcd_display_string("Hi, I am", 1, 0)
+                mylcd.lcd_display_string("Squirtlebot!", 2, 0)
                 
         if phoneCount[0] == prevCount:
             # Get to this section of code when nothing is being detected from model
