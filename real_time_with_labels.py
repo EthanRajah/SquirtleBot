@@ -250,6 +250,10 @@ def main():
             nophoneCount += 1
         else:
             nophoneCount = 0
+
+        # Reset phone count if detection does not exceed 10 (timer has not begun)
+        if LCDSequenceStart[0] == False and nophoneCount >= 10:
+            phoneCount[0] = 0
     
         # Sequence has already started, so keep running until LCD interrupt or no phone being detected
         if LCDSequenceStart[0] == True and nophoneCount > 30:
