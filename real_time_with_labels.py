@@ -244,6 +244,7 @@ def main():
                 nophoneCount = 0
                 phoneCount[0] = 0
                 timeCount = 60
+                time.sleep(1)
                 mylcd = I2C_LCD_driver.lcd()
                 mylcd.lcd_display_string("Hi, I am", 1, 0)
                 mylcd.lcd_display_string("Squirtlebot!", 2, 0)
