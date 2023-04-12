@@ -149,21 +149,24 @@ def main():
     defaultMsg = "Squirtlebot!"
     mylcd.lcd_display_string(defaultMsg, 2, 0)
     
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--model', help='Path of the detection model.', required=True)
-    parser.add_argument('--label', help='Path of the labels file.')
-    parser.add_argument('--output', help='File path of the output image.')
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('--model', help='Path of the detection model.', required=True)
+    # parser.add_argument('--label', help='Path of the labels file.')
+    # parser.add_argument('--output', help='File path of the output image.')
+    # args = parser.parse_args()
 
-    if (args.output):
-        output_file = args.output
-    else:
-        output_file = 'out.jpg'
+    # if (args.output):
+    #     output_file = args.output
+    # else:
+    #     output_file = 'out.jpg'
 
-    if (args.label):
-        label_file = args.label
-    else:
-        label_file = None
+    # if (args.label):
+    #     label_file = args.label
+    # else:
+    #     label_file = None
+    model = 'mobilenet_v2.tflite'
+    label_file = 'coco_labels.txt'
+    output_file = 'out.jpg'
 
     picam2 = Picamera2()
     picam2.start_preview(Preview.QTGL)
@@ -187,7 +190,7 @@ def main():
         buffer = picam2.capture_buffer("lores")
         grey = buffer[:stride * lowresSize[1]].reshape((lowresSize[1], stride))
         prevCount = phoneCount[0]
-        _ = InferenceTensorFlow(grey, args.model, output_file, label_file)
+        _ = InferenceTensorFlow(grey, model, output_file, label_file)
         
         # Check if phone counter is greater than 10 and sequence hasnt been started. If it is, start LCD sequence
         print(phoneCount[0])
