@@ -213,7 +213,7 @@ def main():
                 
             os.chdir('/home/mie438/SquirtleBot')
             
-        if LCDSequenceStart[0] and counterForCounter >= 8:
+        if LCDSequenceStart[0] and counterForCounter >= 5:
             counterForCounter = 0
             if timeCount >= 0:
                 mylcd.lcd_clear()
